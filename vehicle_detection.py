@@ -11,24 +11,6 @@ from multiprocessing import Queue, Pool
 from object_detection.utils import label_map_util, recording_objects_utils
 from object_detection.utils import visualization_utils as vis_util
 
-CWD_PATH = os.getcwd()
-
-# Path to frozen detection graph. This is the actual model that is used for the object detection.
-MODEL_NAME = 'ssd_mobilenet_v1_coco_11_06_2017'
-PATH_TO_CKPT = os.path.join(CWD_PATH, 'object_detection', MODEL_NAME, 'frozen_inference_graph.pb')
-
-# List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join(CWD_PATH, 'object_detection', 'data', 'mscoco_label_map.pbtxt')
-
-NUM_CLASSES = 90
-
-# Loading label map
-label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
-categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES,
-                                                            use_display_name=True)
-category_index = label_map_util.create_category_index(categories)
-
-
 def detect_objects(image_np, sess, detection_graph):
     # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
     image_np_expanded = np.expand_dims(image_np, axis=0)
@@ -67,12 +49,12 @@ def detect_objects(image_np, sess, detection_graph):
     return image_np
 
 
-def worker(input_q, output_q):
+def worker(input_q, output_q, path):
     # Load a (frozen) Tensorflow model into memory.
     detection_graph = tf.Graph()
     with detection_graph.as_default():
         od_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(PATH_TO_CKPT, 'rb') as fid:
+        with tf.gfile.GFile(path, 'rb') as fid:
             serialized_graph = fid.read()
             od_graph_def.ParseFromString(serialized_graph)
             tf.import_graph_def(od_graph_def, name='')
@@ -91,6 +73,7 @@ def worker(input_q, output_q):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('-model_name', '--name-of-the-model', dest='MODEL_NAME', type=str, default='ssd_mobilenet_v1_coco_11_06_2017', help='Path to the frozen weights')
     parser.add_argument('-src', '--source', dest='video_source', type=int,
                         default=0, help='Device index of the camera.')
     parser.add_argument('-wd', '--width', dest='width', type=int,
@@ -106,9 +89,29 @@ if __name__ == '__main__':
     logger = multiprocessing.log_to_stderr()
     logger.setLevel(multiprocessing.SUBDEBUG)
 
+    
+
+    CWD_PATH = os.getcwd()
+
+    # Path to frozen detection graph. This is the actual model that is used for the object detection.
+    # MODEL_NAME = 'ssd_mobilenet_v1_coco_11_06_2017'
+    MODEL_NAME = args.MODEL_NAME
+    PATH_TO_CKPT = os.path.join(CWD_PATH, 'object_detection', MODEL_NAME, 'frozen_inference_graph.pb')
+
+    # List of the strings that is used to add correct label for each box.
+    PATH_TO_LABELS = os.path.join(CWD_PATH, 'object_detection', 'data', 'mscoco_label_map.pbtxt')
+
+    NUM_CLASSES = 90
+
+    # Loading label map
+    label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
+    categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES,
+                                                                use_display_name=True)
+    category_index = label_map_util.create_category_index(categories)
+
     input_q = Queue(maxsize=args.queue_size)
     output_q = Queue(maxsize=args.queue_size)
-    pool = Pool(args.num_workers, worker, (input_q, output_q))
+    pool = Pool(args.num_workers, worker, (input_q, output_q, PATH_TO_CKPT))
 
     # video_capture = WebcamVideoStream(src=args.video_source,
                                       # width=args.width,
