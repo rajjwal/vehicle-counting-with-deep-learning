@@ -74,8 +74,8 @@ def worker(input_q, output_q, path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-model_name', '--name-of-the-model', dest='MODEL_NAME', type=str, default='ssd_mobilenet_v1_coco_11_06_2017', help='Path to the frozen weights')
-    parser.add_argument('-src', '--source', dest='video_source', type=int,
-                        default=0, help='Device index of the camera.')
+    parser.add_argument('-src', '--source', dest='video_source', type=str,
+                        default="/Users/vijay/Downloads/intersection_car_video.mp4", help='Device index of the camera.')
     parser.add_argument('-wd', '--width', dest='width', type=int,
                         default=480, help='Width of the frames in the video stream.')
     parser.add_argument('-ht', '--height', dest='height', type=int,
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     # video_capture = WebcamVideoStream(src=args.video_source,
                                       # width=args.width,
                                       # height=args.height).start()
-    capture = cv2.VideoCapture("/Users/vijay/Downloads/intersection_car_video.mp4")
+    capture = cv2.VideoCapture(args.video_source)
     fps = FPS().start()
 
     while True:  # fps._numFrames < 120
