@@ -17,7 +17,7 @@ car2points_map = defaultdict(list)
 time2cars_map = defaultdict(list)
 detection_ts = list()
 start_time = time.time()
-global num_cars
+num_cars = 0
 
 def bb_intersection_over_union(boxA, boxB):
     # determine the (x, y)-coordinates of the intersection rectangle
@@ -73,7 +73,7 @@ def map_cars_by_bbox(new_boxes, dtime):
             car2points_map[sim_box[1]].append(curr_box)
             time2cars_map[dtime].append((curr_box, sim_box[1]))
             continue
-        else:
+        else: # check prev ko prev timestp
             num_cars = num_cars + 1
             car2points_map['car#{0}'.format(num_cars)].append(curr_box)
             time2cars_map[dtime].append((curr_box, 'car#{0}'.format(num_cars)))
@@ -102,7 +102,7 @@ ap.add_argument("-c", "--confidence", type=float, default=0.25,
     help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
 
-video_path = "data/IntersectionCarVideoI.mp4"
+video_path = "data/IntersectionCarVideoIII.ASF"
 # initialize the list of class labels MobileNet SSD was trained to
 # detect, then generate a set of bounding box colors for each class
 CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
@@ -171,9 +171,11 @@ while True:
                 cv2.putText(frame, label, (startX, y),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
     if any(curr_pts) and prev_pts != curr_pts:
+        print curr_pts
         map_cars_by_bbox(curr_pts, detection_time)
+        print curr_pts
         print "\nNum total cars detected:", len(car2points_map), "\nNum cars last seen on screen:", len(curr_pts)
-    prev_pts = curr_pts[:]
+        prev_pts = curr_pts[:]
     curr_pts = []
     # update the FPS counter
     # fps.update()
@@ -224,8 +226,17 @@ while True:
 # fps.stop()
 # print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
 # print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+print "\nDumping all results of file to analyze later."
+with open('car_results.json', 'w') as outfile:
+    json.dump([car2points_map], outfile)
+    print '\nWrote car2points_map.'
 
+with open('time2cars_map.json', 'w') as outfile:
+    json.dump([time2cars_map], outfile)
+    print 'Wrote time2cars_map.\n'
 # do a bit of cleanup
 # fps.stop()
 cv2.destroyAllWindows()
 vs.stop()
+
+
