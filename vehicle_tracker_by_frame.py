@@ -42,17 +42,37 @@ def bb_intersection_over_union(boxA, boxB):
     # return the intersection over union value
     return iou
 
+def get_median_get_points(boxA, boxB):
+    new_StartX = float(boxA[0] + boxB[0]) / float(2)
+    new_StartY = float(boxA[1] + boxB[1]) / float(2)
+    new_EndX = float(boxA[2] + boxB[2]) / float(2)
+    new_EndY = float(boxA[3] + boxB[3]) / float(2)
+    return (new_StartX, new_StartY, new_EndX, new_EndY)
+
 def uniquify_boxes(new_boxes):
     i = 0
-    for box in new_boxes:
-        for i in xrange(i+1, len(new_boxes)):
-            break
-    return None
+    unique_boxes = list()
+    while i < len(new_boxes):
+        box = new_boxes[i]
+        max_overlap = 1.0
+        min_overlap = 0.3275
+        sim_box = None
+        increment = 1
+        for j in xrange(i+1, len(new_boxes)):
+            overlap = bb_intersection_over_union(box, new_boxes[i])
+            if overlap >= min_overlap:
+                if any(unique_boxes):
+                    unique_boxes[i] = get_median_get_points(unique_boxes[i], new_boxes[i])
+                else:
+                    unique_boxes.append(get_median_get_points(box, new_boxes[i]))
+                increment += 1
+        i += increment
+    return unique_boxes   
 
 def map_cars_by_bbox(new_boxes, dtime):
     global num_cars
-    # if len(new_boxes) > 1:
-    #     new_boxes = uniquify_boxes(new_boxes)
+    if len(new_boxes) > 1:
+        new_boxes = uniquify_boxes(new_boxes)
     if not any(detection_ts):
         detection_ts.append(dtime)
         for i in xrange(len(new_boxes)):
@@ -136,7 +156,8 @@ while True:
     # to have a maximum width of 400 pixels
     success, frame = vs.read()
     if not success:
-        sys.exit(1)
+        print "Video read Complete! :D or Failed! :("
+        break
     frame = imutils.resize(frame, width=1000)
 
     # grab the frame dimensions and convert it to a blob
