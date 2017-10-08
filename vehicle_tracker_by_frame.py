@@ -42,6 +42,9 @@ def bb_intersection_over_union(boxA, boxB):
     # return the intersection over union value
     return iou
 
+def raw_template_matching(boxA, boxB):
+    return None
+
 def map_cars_by_bbox(new_boxes, dtime):
     global num_cars
     if not any(detection_ts):
@@ -56,7 +59,7 @@ def map_cars_by_bbox(new_boxes, dtime):
     detection_ts.append(dtime)
     for curr_box in new_boxes:
         max_overlap = 1.0
-        min_overlap = 0.375
+        min_overlap = 0.3275
         sim_box = None
         for prev_box in time2cars_map[prev_timestp]:
             overlap = bb_intersection_over_union(curr_box, prev_box[0])
@@ -69,7 +72,7 @@ def map_cars_by_bbox(new_boxes, dtime):
                 min_overlap = overlap
         if overlap == max_overlap:
             continue
-        if min_overlap != 0.375:
+        if min_overlap != 0.3275:
             car2points_map[sim_box[1]].append(curr_box)
             time2cars_map[dtime].append((curr_box, sim_box[1]))
             continue
@@ -177,44 +180,7 @@ while True:
         print "\nNum total cars detected:", len(car2points_map), "\nNum cars last seen on screen:", len(curr_pts)
         prev_pts = curr_pts[:]
     curr_pts = []
-    # update the FPS counter
-    # fps.update()
-  #   for i in np.arange(1, len(pts)):
-        # # if either of the tracked points are None, ignore
-        # # them
-        # print "reach"
-        # if pts[i - 1] is None or pts[i] is None:
-        #     continue
- 
-        # # check to see if enough points have been accumulated in
-        # # the buffer
-        # if counter >= 10 and i == 1 and pts[-10] is not None:
-        #     # compute the difference between the x and y
-        #     # coordinates and re-initialize the direction
-        #     # text variables
-        #     dX = pts[-10][0] - pts[i][0]
-        #     dY = pts[-10][1] - pts[i][1]
-        #     (dirX, dirY) = ("", "")
- 
-        #     # ensure there is significant movement in the
-        #     # x-direction
-        #     if np.abs(dX) > 20:
-        #         dirX = "East" if np.sign(dX) == 1 else "West"
- 
-        #     # ensure there is significant movement in the
-        #     # y-direction
-        #     if np.abs(dY) > 20:
-        #         dirY = "North" if np.sign(dY) == 1 else "South"
- 
-        #     # handle when both directions are non-empty
-        #     if dirX != "" and dirY != "":
-        #         direction = "{}-{}".format(dirY, dirX)
- 
-        #     # otherwise, only one direction is non-empty
-        #     else:
-        #         direction = dirX if dirX != "" else dirY
 
-    # show the output frame
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1) & 0xFF
 
@@ -222,10 +188,6 @@ while True:
     if key == ord("q"):
         break
 
-# stop the timer and display FPS information
-# fps.stop()
-# print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
-# print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 print "\nDumping all results of file to analyze later."
 with open('car_results.json', 'w') as outfile:
     json.dump([car2points_map], outfile)
@@ -234,6 +196,12 @@ with open('car_results.json', 'w') as outfile:
 with open('time2cars_map.json', 'w') as outfile:
     json.dump([time2cars_map], outfile)
     print 'Wrote time2cars_map.\n'
+
+# stop the timer and display FPS information
+# fps.stop()
+# print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
+# print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+
 # do a bit of cleanup
 # fps.stop()
 cv2.destroyAllWindows()
