@@ -45,14 +45,14 @@ def bb_intersection_over_union(boxA, boxB):
 def uniquify_boxes(new_boxes):
     i = 0
     for box in new_boxes:
-        box = cv2.
         for i in xrange(i+1, len(new_boxes)):
+            break
     return None
 
 def map_cars_by_bbox(new_boxes, dtime):
     global num_cars
-    if len(new_boxes) > 1:
-        new_boxes = uniquify_boxes(new_boxes)
+    # if len(new_boxes) > 1:
+    #     new_boxes = uniquify_boxes(new_boxes)
     if not any(detection_ts):
         detection_ts.append(dtime)
         for i in xrange(len(new_boxes)):
@@ -69,7 +69,7 @@ def map_cars_by_bbox(new_boxes, dtime):
         sim_box = None
         for prev_box in time2cars_map[prev_timestp]:
             overlap = bb_intersection_over_union(curr_box, prev_box[0])
-            if overlap == max_overlap:
+            if overlap >= max_overlap:
                 car2points_map[prev_box[1]].append(curr_box)
                 time2cars_map[dtime].append((curr_box, prev_box[1]))
                 break
@@ -195,11 +195,11 @@ while True:
         break
 
 print "\nDumping all results of file to analyze later."
-with open('car_results.json', 'w') as outfile:
+with open('results/car_results.json', 'w') as outfile:
     json.dump([car2points_map], outfile)
     print '\nWrote car2points_map.'
 
-with open('time2cars_map.json', 'w') as outfile:
+with open('results/time2cars_map.json', 'w') as outfile:
     json.dump([time2cars_map], outfile)
     print 'Wrote time2cars_map.\n'
 
