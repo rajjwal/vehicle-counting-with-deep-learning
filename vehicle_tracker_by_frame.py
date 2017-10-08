@@ -42,11 +42,17 @@ def bb_intersection_over_union(boxA, boxB):
     # return the intersection over union value
     return iou
 
-def raw_template_matching(boxA, boxB):
+def uniquify_boxes(new_boxes):
+    i = 0
+    for box in new_boxes:
+        box = cv2.
+        for i in xrange(i+1, len(new_boxes)):
     return None
 
 def map_cars_by_bbox(new_boxes, dtime):
     global num_cars
+    if len(new_boxes) > 1:
+        new_boxes = uniquify_boxes(new_boxes)
     if not any(detection_ts):
         detection_ts.append(dtime)
         for i in xrange(len(new_boxes)):
