@@ -10,6 +10,7 @@ import imutils
 import time
 import cv2
 import sys
+import json
 
 from collections import defaultdict
 
@@ -73,6 +74,8 @@ def map_cars_by_bbox(new_boxes, dtime):
     global num_cars
     if len(new_boxes) > 1:
         new_boxes = uniquify_boxes(new_boxes)
+    print'-------------------------------------------'
+    print "\nNum cars now seen on screen:", len(new_boxes)
     if not any(detection_ts):
         detection_ts.append(dtime)
         for i in xrange(len(new_boxes)):
@@ -135,7 +138,7 @@ video_path = "data/IntersectionCarVideoIII.ASF"
 # initialize the list of class labels MobileNet SSD was trained to
 # detect, then generate a set of bounding box colors for each class
 CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
-rel_classes = ['car', 'truck', 'bus']
+rel_classes = ['car', 'truck']
 COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
 # load our serialized model from disk
@@ -158,8 +161,6 @@ while True:
     if not success:
         print "Video read Complete! :D or Failed! :("
         break
-    frame = imutils.resize(frame, width=1000)
-
     # grab the frame dimensions and convert it to a blob
     (h, w) = frame.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
@@ -186,7 +187,7 @@ while True:
             # `detections`, then compute the (x, y)-coordinates of
             # the bounding box for the object
             idx = int(detections[0, 0, i, 1])
-            if idx != 7:
+            if CLASSES[idx] not in rel_classes:
                 continue
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (startX, startY, endX, endY) = box.astype("int")
@@ -201,10 +202,8 @@ while True:
                 cv2.putText(frame, label, (startX, y),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
     if any(curr_pts) and prev_pts != curr_pts:
-        print curr_pts
         map_cars_by_bbox(curr_pts, detection_time)
-        print curr_pts
-        print "\nNum total cars detected:", len(car2points_map), "\nNum cars last seen on screen:", len(curr_pts)
+        print "\nNum total cars detected:", len(car2points_map)
         prev_pts = curr_pts[:]
     curr_pts = []
 
@@ -232,6 +231,4 @@ with open('results/time2cars_map.json', 'w') as outfile:
 # do a bit of cleanup
 # fps.stop()
 cv2.destroyAllWindows()
-vs.stop()
-
-
+vs.close()
